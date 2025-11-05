@@ -66,7 +66,7 @@ const NavItems = ({ handleClick }: NavItemsProps) => {
             alt={user.name}
             className="size-16 rounded-full aspect-square"
           />
-          <article className="flex flex-col gap-[2px] max-w-[115px]">
+          <article className="flex flex-col gap-0.5 max-w-[115px]">
             <h2 className="text-sm md:text-base font-semibold text-dark-200 truncate">
               {user.name}
             </h2>
