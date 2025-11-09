@@ -1,10 +1,13 @@
-
 import { useRef } from "react";
 import { Link } from "react-router";
 import { SidebarComponent } from "@syncfusion/ej2-react-navigations";
 import NavItems from "./NavItems";
 
-const MobileSidebar = () => {
+interface MobileSidebarProps {
+  user: any;
+}
+
+const MobileSidebar = ({ user }: MobileSidebarProps) => {
   const sidebarRef = useRef<SidebarComponent | null>(null);
 
   const toggleMenuSidebar = () => sidebarRef.current?.toggle();
@@ -41,7 +44,8 @@ const MobileSidebar = () => {
         position="Left"
         className="w-[260px] bg-white shadow-lg"
       >
-        <NavItems handleClick={toggleMenuSidebar} />
+        {/* ✅ Pass the user prop here */}
+        <NavItems handleClick={toggleMenuSidebar} user={user} />
       </SidebarComponent>
     </div>
   );

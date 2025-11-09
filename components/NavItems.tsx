@@ -1,20 +1,19 @@
-import { Link, NavLink, useLoaderData, useNavigate } from "react-router";
+import { Link, NavLink, useNavigate } from "react-router";
 import { sidebarItems } from "~/constants";
 import { cn } from "../app/lib/utils";
 import { logoutUser } from "~/appwrite/auth";
 
 interface NavItemsProps {
   handleClick?: () => void;
+  user: any;
 }
 
-const NavItems = ({ handleClick }: NavItemsProps) => {
-  const user = useLoaderData() as any;
+const NavItems = ({ handleClick, user }: NavItemsProps) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    // const success = await logoutUser();
-    // if (success) navigate("/sign-in", { replace: true });
-    console.log('logout')
+    const success = await logoutUser();
+    if (success) navigate("/sign-in", { replace: true });
   };
 
   return (
