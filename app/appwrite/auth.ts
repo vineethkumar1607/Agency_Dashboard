@@ -1,48 +1,103 @@
-import { OAuthProvider } from "appwrite";
-import { account } from "./client";
+import { ID, OAuthProvider, Query } from "appwrite";
+import { account, database, appwriteConfig } from "./client";
 
-export const loginWithGoogle = async () => {
+/**
+ * ✅ Start Google OAuth login using Appwrite session-based flow
+ */
+export const loginWithGoogle = () => {
   try {
-    const session = await account.createOAuth2Token(OAuthProvider.Google);
-    console.log("OAuth token created:", session);
+    const successUrl = `${window.location.origin}/auth/callback`;
+    const failureUrl = `${window.location.origin}/sign-in`;
+
+    console.log("[auth] Starting OAuth redirect ->", { successUrl, failureUrl });
+
+    // ✅ Correct scopes: only valid for Google
+    account.createOAuth2Session(
+      OAuthProvider.Google,
+      successUrl,
+      failureUrl,
+      ["email", "profile", "openid"] // ✅ removed "account"
+    );
+
+    console.log("[auth] Redirecting to Google login...");
   } catch (error) {
-    console.error("Login failed:", error);
+    console.error("[auth] Google login failed:", error);
   }
 };
 
-
-export const getGooglePicture = async (accessToken: string) => {
+/**
+ * ✅ Get existing user from database
+ */
+export const getExistingUser = async (accountId: string) => {
   try {
-    const response = await fetch(
-      "https://people.googleapis.com/v1/people/me?personFields=names,emailAddresses,photos",
+    const { documents } = await database.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.usersTableId,
+      [Query.equal("accountId", accountId)]
+    );
+
+    return documents.length > 0 ? documents[0] : null;
+  } catch (error: any) {
+    console.error("Error checking if user exists:", error?.message);
+    return null;
+  }
+};
+
+/**
+ * ✅ Create or update user in Appwrite database
+ */
+export const storeUserData = async (
+  name: string,
+  email: string,
+  imageUrl: string
+) => {
+  try {
+    const user = await account.get();
+    if (!user) throw new Error("User not authenticated");
+
+    const existingUser = await getExistingUser(user.$id);
+
+    if (existingUser) {
+      const updatedUser = await database.updateDocument(
+        appwriteConfig.databaseId,
+        appwriteConfig.usersTableId,
+        existingUser.$id,
+        {
+          name,
+          email,
+          imageUrl,
+          lastLogin: new Date().toISOString(),
+        }
+      );
+      console.log("User document updated:", updatedUser);
+      return updatedUser;
+    }
+
+    // ✅ Create new record in DB
+    const newUser = await database.createDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.usersTableId,
+      ID.unique(),
       {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        accountId: user.$id,
+        email: user.email,
+        name: user.name,
+        imageUrl: imageUrl || "",
+        joinedAt: new Date().toISOString(),
       }
     );
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch user info: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-
-    const name = data.names?.[0]?.displayName ?? "Unknown";
-    const email = data.emailAddresses?.[0]?.value ?? "";
-    const picture = data.photos?.[0]?.url ?? "";
-
-    return { name, email, picture };
+    console.log("New user document created:", newUser);
+    return newUser;
   } catch (error) {
-    console.error("Error fetching Google profile:", error);
-    //Return a safe fallback to avoid crashing the UI
-    return { name: "", email: "", picture: "" };
+    console.error("Failed to store user data:", error);
+    throw error;
   }
 };
 
-
-
-
+/**
+ * ✅ Logout user
+ */
 export const logoutUser = async () => {
   try {
     await account.deleteSession("current");

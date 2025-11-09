@@ -1,6 +1,9 @@
 import { type RouteConfig, layout, route } from "@react-router/dev/routes";
 
 export default [
+  route("sign-in", "./routes/root/SignIn.tsx"),
+  route("auth/callback", "./routes/Callback.tsx"),
+
   layout("routes/admin/AdminLayout.tsx", [
     route("dashboard", "./routes/admin/Dashboard.tsx"),
     route("users", "./routes/admin/Users.tsx"),
