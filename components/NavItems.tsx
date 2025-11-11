@@ -1,7 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router";
 import { sidebarItems } from "~/constants";
 import { cn } from "../app/lib/utils";
-import { logoutUser } from "~/appwrite/auth";
+import { logoutUser } from "~/firebase/auth";
 
 interface NavItemsProps {
   handleClick?: () => void;
@@ -55,9 +55,9 @@ const NavItems = ({ handleClick, user }: NavItemsProps) => {
 
         <footer className="flex items-center gap-3.5 pb-8">
           <img
-            src={user?.imageUrl || "/assets/icons/user.svg"}
-            alt={user?.name}
-            className="size-12 rounded-full aspect-square"
+            src={user?.imageUrl || user?.photoURL || "/assets/icons/user.svg"}
+            alt={user?.name || user?.displayName}
+            className="w-12 h-12 rounded-full object-cover border border-light-100"
           />
           <article className="flex flex-col gap-0.5 max-w-[115px]">
             <h2 className="text-sm md:text-base font-semibold text-dark-200 truncate">
@@ -71,6 +71,7 @@ const NavItems = ({ handleClick, user }: NavItemsProps) => {
             <img src="/assets/icons/logout.svg" alt="logout" className="size-6" />
           </button>
         </footer>
+
       </div>
     </section>
   );

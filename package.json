@@ -11,6 +11,7 @@
   "dependencies": {
     "@react-router/node": "^7.9.2",
     "@react-router/serve": "^7.9.2",
+    "@reduxjs/toolkit": "^2.10.1",
     "@syncfusion/ej2-base": "^31.2.5",
     "@syncfusion/ej2-react-buttons": "^31.2.3",
     "@syncfusion/ej2-react-charts": "^31.2.5",
@@ -22,9 +23,11 @@
     "appwrite": "^21.4.0",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.19",
+    "firebase": "^12.5.0",
     "isbot": "^5.1.31",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-redux": "^9.2.0",
     "react-router": "^7.9.2",
     "tailwind-merge": "^3.4.0"
   },

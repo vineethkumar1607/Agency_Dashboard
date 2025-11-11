@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   isRouteErrorResponse,
   Links,
@@ -6,12 +7,17 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
-
 import type { Route } from "./+types/root";
 import "./app.css";
 import { registerLicense } from "@syncfusion/ej2-base";
-import { account, client } from "~/appwrite/client";
-import { refreshJWT } from "~/appwrite/refreshJWT";
+import { Provider, useDispatch, useSelector } from "react-redux";
+import { store } from "../store/store";
+import {
+  initializeAuthListener,
+  selectIsInitialized,
+  selectUser,
+} from "../store/auth/authSlice";
+import type { AppDispatch } from "../store/store";
 
 registerLicense(import.meta.env.VITE_SYNCFUSION_LICENSE_KEY);
 
@@ -34,40 +40,46 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
-        <ScrollRestoration />
-        <Scripts />
+        <Provider store={store}>
+          {children}
+          <ScrollRestoration />
+          <Scripts />
+        </Provider>
       </body>
     </html>
   );
 }
 
 export default function App() {
-  // ✅ Restore JWT on reload
-  if (typeof window !== "undefined") {
-    const savedJWT = localStorage.getItem("appwriteJWT");
-    if (savedJWT) {
-      console.log("[App Init] Restoring JWT from localStorage...");
-      client.setJWT(savedJWT);
+  const dispatch = useDispatch<AppDispatch>();
+  const initialized = useSelector(selectIsInitialized);
+  const firebaseUser = useSelector(selectUser);
 
-      account.get().catch(async (err) => {
-        if (err.message?.includes("Expired")) {
-          console.warn("[App Init] JWT expired, refreshing...");
-          await refreshJWT();
-        } else {
-          console.error("[App Init] Invalid JWT:", err);
-          localStorage.removeItem("appwriteJWT");
-        }
-      });
-    }
+  useEffect(() => {
+    dispatch(initializeAuthListener()).catch((err) =>
+      console.error("Auth listener initialization failed:", err)
+    );
+  }, [dispatch]);
+
+  if (!initialized) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <img src="/assets/icons/loading.svg" alt="loading" className="mx-auto size-10 animate-spin" />
+          <p className="mt-4 text-gray-600 text-sm">Restoring your session...</p>
+        </div>
+      </div>
+    );
   }
 
+  console.log("[App Init] Firebase user:", firebaseUser?.email || "No user");
   return <Outlet />;
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = "Oops!";
   let details = "An unexpected error occurred.";
+
   if (isRouteErrorResponse(error)) {
     message = error.status === 404 ? "404" : "Error";
     details =

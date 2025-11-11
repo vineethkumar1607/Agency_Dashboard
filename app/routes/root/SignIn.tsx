@@ -1,28 +1,45 @@
-import { Link, redirect } from "react-router";
+// app/routes/root/SignIn.tsx
+import { Link, redirect, useNavigate } from "react-router";
 import { ButtonComponent } from "@syncfusion/ej2-react-buttons";
-import { loginWithGoogle } from "~/appwrite/auth";
-import { account } from "~/appwrite/client";
+import { loginWithGoogle } from "~/firebase/auth"; // firebase auth helper
+import { auth } from "~/firebase/firebase"; // firebase auth instance
 
+// This loader runs on the client. If a Firebase session is already active,
+// redirect the user to /dashboard.
 export async function clientLoader() {
   try {
-    console.log('[SignIn.loader] checking session...');
-    const user = await account.get();
-    console.log('[SignIn.loader] account.get() result:', user);
+    // auth.currentUser is available on the client after Firebase initializes.
+    const user = auth.currentUser;
 
-    if (user?.$id) {
-      console.log('[SignIn.loader] user logged in -> redirecting to /dashboard');
-      throw redirect('/dashboard');
+    if (user?.uid) {
+      // user already signed in, redirect to dashboard
+      throw redirect("/dashboard");
     }
 
     return null;
   } catch (error) {
-    console.warn('[SignIn.loader] no active session (expected for sign-in):', error);
+    // No active session is expected for sign-in page — return null so the page renders.
+    console.warn("[SignIn.loader] no active session:", error);
     return null;
   }
 }
 
-
 const SignIn = () => {
+  const navigate = useNavigate();
+
+  // Called by the button; triggers Firebase Google login (popup).
+  // On success, the auth helper stores user data in Firestore and returns the user.
+  const handleLogin = async () => {
+    try {
+      const user = await loginWithGoogle();
+      // If you want to guard against missing user: if (!user) throw new Error("No user");
+      navigate("/dashboard");
+    } catch (err) {
+      // surface error for debugging + show simple alert for user
+      console.error("[SignIn] login failed:", err);
+    }
+  };
+
   return (
     <main className="auth">
       <section className="size-full glassmorphism flex justify-center items-center px-6">
@@ -33,6 +50,7 @@ const SignIn = () => {
             </Link>
             <h1 className="text-[20px] md:text-[28px] font-bold text-dark-100">Your Vistous</h1>
           </header>
+
           <article>
             <h2 className="text-2xl md:text-[28px] font-semibold text-dark-100 text-center">
               Discover Your Next Horizon
@@ -43,7 +61,7 @@ const SignIn = () => {
           </article>
 
           <ButtonComponent
-            onClick={loginWithGoogle}
+            onClick={handleLogin}
             type="button"
             className="h-11! w-full! mt-4 bg-primary-100! px-4! rounded-lg! flex! items-center! justify-center! gap-1.5! shadow-none!"
           >
